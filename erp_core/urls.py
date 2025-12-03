@@ -16,8 +16,22 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
+from cashbook.views import FinancialEntryViewSet
+from inventory.views import GemstoneViewSet
+from memo.views import MemoLineViewSet, MemoViewSet
+from production.views import ProcessStageViewSet
+
+router = DefaultRouter()
+router.register(r"gemstones", GemstoneViewSet)
+router.register(r"process-stages", ProcessStageViewSet)
+router.register(r"memos", MemoViewSet)
+router.register(r"memo-lines", MemoLineViewSet)
+router.register(r"financial-entries", FinancialEntryViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/v1/", include(router.urls)),
 ]

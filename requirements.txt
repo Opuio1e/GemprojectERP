@@ -1,2 +1,4 @@
-Django
-djangorestframework
+Django==5.2.9
+djangorestframework==3.15.2
+dj-database-url==2.2.0
+python-dotenv==1.0.1

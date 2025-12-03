@@ -10,22 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-=zd+37$+&ecj!p)kyh1@719cur#=-@(9=v)%8tc31)1%m7ut0o"
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-=zd+37$+&ecj!p)kyh1@719cur#=-@(9=v)%8tc31)1%m7ut0o")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
 
 
 # Application definition
@@ -78,6 +83,12 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    import dj_database_url
+
+    DATABASES["default"] = dj_database_url.parse(database_url, conn_max_age=600)
 
 
 # Password validation

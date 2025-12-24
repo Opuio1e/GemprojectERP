@@ -12,7 +12,6 @@ import { logAudit } from '../utils/audit';
 import jsPDF from 'jspdf';
 
 const InvoicePage = () => {
-  const parties = useLiveQuery(() => db.parties.toArray(), []);
   const sellRecords = useLiveQuery(() => db.sellRecords.toArray(), []);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [partyId, setPartyId] = useState('');
@@ -122,9 +121,6 @@ const InvoicePage = () => {
     doc.text(`Party: ${partyId}`, 14, 32);
     doc.text(`Total CTS: ${totals.totalCts.toFixed(2)}`, 14, 40);
     doc.text(`Total Amount: ฿ ${totals.totalAmount.toFixed(2)}`, 14, 48);
-    doc.text(`Party: ${parties?.find((item) => item.id === partyId)?.name ?? ''}`, 14, 32);
-    doc.text(`Total CTS: ${totals.totalCts.toFixed(2)}`, 14, 40);
-    doc.text(`Total Amount: ₹ ${totals.totalAmount.toFixed(2)}`, 14, 48);
     doc.save(`${invoiceNo}.pdf`);
   };
 
@@ -230,14 +226,6 @@ const InvoicePage = () => {
               value={partyId}
               onChange={(event) => setPartyId(event.target.value)}
             />
-            <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
-              <option value="">Select Party</option>
-              {parties?.map((party) => (
-                <option key={party.id} value={party.id}>
-                  {party.name}
-                </option>
-              ))}
-            </Select>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Invoice No</label>
@@ -256,14 +244,6 @@ const InvoicePage = () => {
                 <option key={record.id} value={record.sellId} />
               ))}
             </datalist>
-            <Select value={sellId} onChange={(event) => handleSellSelect(event.target.value)}>
-              <option value="">Select Sell ID</option>
-              {sellRecords?.map((record) => (
-                <option key={record.id} value={record.sellId}>
-                  {record.sellId}
-                </option>
-              ))}
-            </Select>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Transaction Type</label>
@@ -284,7 +264,6 @@ const InvoicePage = () => {
             <div>
               <label className="text-xs uppercase text-slate-500">Total Amount</label>
               <Input value={`฿ ${totals.totalAmount.toFixed(2)}`} readOnly />
-              <Input value={totals.totalAmount.toFixed(2)} readOnly />
             </div>
             <div>
               <label className="text-xs uppercase text-slate-500">Avg Price</label>

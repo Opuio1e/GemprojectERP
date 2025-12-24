@@ -1,13 +1,8 @@
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-  { to: '/inventory', label: 'Inventory / Sell Records' },
-  { to: '/invoice', label: 'Invoice' },
-  { to: '/memos', label: 'Memo In / Out' },
-  { to: '/production', label: 'Production Tracking' },
-  { to: '/cashbook', label: 'Cashbook / Ledger' },
-  { to: '/reports', label: 'Reporting' },
-  { to: '/settings', label: 'Settings' }
+  { to: '/memos', label: 'Memo UI' },
+  { to: '/cashbook', label: 'Cashbook UI' }
 ];
 
 const TopNav = () => (

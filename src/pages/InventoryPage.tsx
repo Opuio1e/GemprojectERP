@@ -139,7 +139,7 @@ const InventoryPage = () => {
           <SummaryCard title="Records" value={summary.totalRecords} footer="Visible records" />
           <SummaryCard title="Remaining CTS" value={summary.remainingCts.toFixed(2)} />
           <SummaryCard title="Remaining Amount" value={`฿ ${summary.remainingAmount.toFixed(2)}`} />
-          <SummaryCard title="Remaining Amount" value={`₹ ${summary.remainingAmount.toFixed(2)}`} />
+          <SummaryCard title="Remaining Amount" value={`฿ ${summary.remainingAmount.toFixed(2)}`} />
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import type {
   ImportSummary,
   InventoryRecord,
   Invoice,
+  InvoiceLineItem,
   LedgerEntry,
   Lot,
   Memo,
@@ -198,6 +199,44 @@ export const exportWorkbook = async () => {
 
   XLSX.writeFile(workbook, 'gemproject-erp-export.xlsx');
   await logAudit('export', 'workbook', 'export', 'Exported workbook');
+};
+
+export const exportMemoWorkbook = async (memos: Memo[]) => {
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(memos), 'Memos');
+  XLSX.writeFile(workbook, 'memo-export.xlsx');
+  await logAudit('export', 'memo', 'export', 'Exported memo workbook');
+};
+
+export const exportInvoiceWorkbook = async (invoice: {
+  invoiceNo: string;
+  date: string;
+  party: string;
+  sellId: string;
+  transactionType: string;
+  totalCts: number;
+  totalAmount: number;
+  averagePrice: number;
+  lineItems: InvoiceLineItem[];
+}) => {
+  const workbook = XLSX.utils.book_new();
+  const summarySheet = XLSX.utils.json_to_sheet([
+    {
+      invoiceNo: invoice.invoiceNo,
+      date: invoice.date,
+      party: invoice.party,
+      sellId: invoice.sellId,
+      transactionType: invoice.transactionType,
+      totalCts: invoice.totalCts,
+      totalAmount: invoice.totalAmount,
+      averagePrice: invoice.averagePrice
+    }
+  ]);
+  const lineItemsSheet = XLSX.utils.json_to_sheet(invoice.lineItems);
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Invoice');
+  XLSX.utils.book_append_sheet(workbook, lineItemsSheet, 'LineItems');
+  XLSX.writeFile(workbook, `${invoice.invoiceNo || 'invoice'}.xlsx`);
+  await logAudit('export', invoice.invoiceNo || 'invoice', 'export', 'Exported invoice workbook');
 };
 
 export const exportCsvReport = async (name: string, rows: Record<string, unknown>[]) => {

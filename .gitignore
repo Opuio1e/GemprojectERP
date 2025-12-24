@@ -19,3 +19,8 @@ venv/
 
 # OS files
 .DS_Store
+
+# Node
+node_modules/
+dist/
+npm-debug.log*

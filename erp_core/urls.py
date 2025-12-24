@@ -16,7 +16,8 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 
 from cashbook.views import FinancialEntryViewSet
@@ -34,4 +35,5 @@ router.register(r"financial-entries", FinancialEntryViewSet)
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include(router.urls)),
+    re_path(r"^.*$", TemplateView.as_view(template_name="index.html")),
 ]

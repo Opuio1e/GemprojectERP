@@ -18,7 +18,7 @@ A static, GitHub Pages-ready ERP interface that mirrors the Excel workflows for 
 - SheetJS (XLSX)
 - jsPDF
 
-## Getting Started
+## Getting Started (Vite Dev Server)
 ```bash
 npm install
 npm run dev
@@ -30,6 +30,15 @@ Open http://localhost:5173 to view the app.
 ```bash
 npm run build
 ```
+
+## Serve the built app with Django
+The Django server expects the compiled `dist/` bundle. Build the app, then start the Django server:
+```bash
+npm run build
+python manage.py runserver
+```
+
+Open http://127.0.0.1:8000 to view the app via Django.
 
 ## Import Workbook
 1. Click **Import Workbook** on the Inventory or Settings page.

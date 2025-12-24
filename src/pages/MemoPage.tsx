@@ -11,6 +11,7 @@ import { logAudit } from '../utils/audit';
 const stages = ['Acid', 'Heat', 'Rough', 'Preform', 'Cutting'];
 
 const MemoPage = () => {
+  const parties = useLiveQuery(() => db.parties.toArray(), []);
   const lots = useLiveQuery(() => db.lots.toArray(), []);
   const memos = useLiveQuery(() => db.memos.toArray(), []);
   const [memoNo, setMemoNo] = useState('MEMO-001');
@@ -59,6 +60,7 @@ const MemoPage = () => {
     memo.memoNo,
     memo.date,
     memo.partyId ?? '-',
+    parties?.find((party) => party.id === memo.partyId)?.name ?? '-',
     lots?.find((lot) => lot.id === memo.lotId)?.lotNo ?? '-',
     memo.stage,
     memo.direction,
@@ -96,6 +98,14 @@ const MemoPage = () => {
               value={partyId}
               onChange={(event) => setPartyId(event.target.value)}
             />
+            <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
+              <option value="">Select Party</option>
+              {parties?.map((party) => (
+                <option key={party.id} value={party.id}>
+                  {party.name}
+                </option>
+              ))}
+            </Select>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Lot</label>

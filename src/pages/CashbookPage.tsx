@@ -10,6 +10,7 @@ import { calculateLedgerBalance } from '../utils/calculations';
 import { logAudit } from '../utils/audit';
 
 const CashbookPage = () => {
+  const parties = useLiveQuery(() => db.parties.toArray(), []);
   const lots = useLiveQuery(() => db.lots.toArray(), []);
   const entries = useLiveQuery(() => db.ledgerEntries.toArray(), []);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -58,6 +59,7 @@ const CashbookPage = () => {
   const rows = rowsWithBalance.map((entry) => [
     entry.date,
     entry.partyId ?? '-',
+    parties?.find((party) => party.id === entry.partyId)?.name ?? '-',
     lots?.find((lot) => lot.id === entry.lotId)?.lotNo ?? '-',
     entry.process ?? '-',
     entry.debit.toFixed(2),
@@ -92,6 +94,14 @@ const CashbookPage = () => {
               value={partyId}
               onChange={(event) => setPartyId(event.target.value)}
             />
+            <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
+              <option value="">Select Party</option>
+              {parties?.map((party) => (
+                <option key={party.id} value={party.id}>
+                  {party.name}
+                </option>
+              ))}
+            </Select>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Lot</label>

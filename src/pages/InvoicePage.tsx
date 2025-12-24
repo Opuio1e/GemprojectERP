@@ -17,6 +17,7 @@ const InvoicePage = () => {
   const sellRecords = useLiveQuery(() => db.sellRecords.toArray(), []);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [partyId, setPartyId] = useState('');
+  const [partyName, setPartyName] = useState('');
   const [sellId, setSellId] = useState('');
   const [invoiceNo, setInvoiceNo] = useState('INV-001');
   const [transactionType, setTransactionType] = useState('Cash');
@@ -38,12 +39,30 @@ const InvoicePage = () => {
 
   const totals = useMemo(() => calculateInvoiceTotals(lineItems), [lineItems]);
 
+  const resolvePartyId = async (name: string) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return '';
+    const currentParties = parties ?? (await db.parties.toArray());
+    const existing = currentParties.find(
+      (party) => party.name.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (existing) {
+      setPartyId(existing.id);
+      return existing.id;
+    }
+    const id = nanoid();
+    await db.parties.add({ id, name: trimmedName });
+    setPartyId(id);
+    return id;
+  };
+
   const handleSellSelect = async (value: string) => {
     setSellId(value);
     const record = sellRecords?.find((item) => item.sellId === value);
     if (record) {
       setLineItems(record.lineItems);
       setPartyId(record.partyId ?? '');
+      setPartyName(parties?.find((party) => party.id === record.partyId)?.name ?? '');
     }
   };
 
@@ -81,6 +100,7 @@ const InvoicePage = () => {
   const clearForm = () => {
     setSellId('');
     setPartyId('');
+    setPartyName('');
     setInvoiceNo(`INV-${Math.floor(Math.random() * 900 + 100)}`);
     setLineItems([
       {
@@ -100,11 +120,12 @@ const InvoicePage = () => {
   };
 
   const saveInvoice = async () => {
+    const resolvedPartyId = await resolvePartyId(partyName);
     await db.invoices.add({
       id: nanoid(),
       invoiceNo,
       date,
-      partyId,
+      partyId: resolvedPartyId,
       sellId,
       transactionType,
       totalCts: totals.totalCts,
@@ -225,14 +246,23 @@ const InvoicePage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Party</label>
-            <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
-              <option value="">Select Party</option>
+            <Input
+              list="invoice-party-list"
+              value={partyName}
+              onChange={(event) => {
+                const value = event.target.value;
+                setPartyName(value);
+                const matched = parties?.find(
+                  (party) => party.name.trim().toLowerCase() === value.trim().toLowerCase()
+                );
+                setPartyId(matched?.id ?? '');
+              }}
+            />
+            <datalist id="invoice-party-list">
               {parties?.map((party) => (
-                <option key={party.id} value={party.id}>
-                  {party.name}
-                </option>
+                <option key={party.id} value={party.name} />
               ))}
-            </Select>
+            </datalist>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Invoice No</label>

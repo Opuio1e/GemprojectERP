@@ -17,17 +17,36 @@ const MemoPage = () => {
   const [memoNo, setMemoNo] = useState('MEMO-001');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [partyId, setPartyId] = useState('');
+  const [partyName, setPartyName] = useState('');
   const [lotId, setLotId] = useState('');
   const [stage, setStage] = useState(stages[0]);
   const [direction, setDirection] = useState<'in' | 'out'>('out');
   const [notes, setNotes] = useState('');
 
+  const resolvePartyId = async (name: string) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) return '';
+    const currentParties = parties ?? (await db.parties.toArray());
+    const existing = currentParties.find(
+      (party) => party.name.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (existing) {
+      setPartyId(existing.id);
+      return existing.id;
+    }
+    const id = nanoid();
+    await db.parties.add({ id, name: trimmedName });
+    setPartyId(id);
+    return id;
+  };
+
   const addMemo = async () => {
+    const resolvedPartyId = await resolvePartyId(partyName);
     await db.memos.add({
       id: nanoid(),
       memoNo,
       date,
-      partyId,
+      partyId: resolvedPartyId,
       lotId,
       stage,
       direction,
@@ -92,14 +111,23 @@ const MemoPage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Party</label>
-            <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
-              <option value="">Select Party</option>
+            <Input
+              list="memo-party-list"
+              value={partyName}
+              onChange={(event) => {
+                const value = event.target.value;
+                setPartyName(value);
+                const matched = parties?.find(
+                  (party) => party.name.trim().toLowerCase() === value.trim().toLowerCase()
+                );
+                setPartyId(matched?.id ?? '');
+              }}
+            />
+            <datalist id="memo-party-list">
               {parties?.map((party) => (
-                <option key={party.id} value={party.id}>
-                  {party.name}
-                </option>
+                <option key={party.id} value={party.name} />
               ))}
-            </Select>
+            </datalist>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Lot</label>

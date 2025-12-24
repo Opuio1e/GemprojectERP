@@ -9,6 +9,7 @@ import { db } from '../db';
 import type { InvoiceLineItem } from '../types';
 import { calculateInvoiceTotals } from '../utils/calculations';
 import { logAudit } from '../utils/audit';
+import { formatCurrency, parseCurrencyInput } from '../utils/formatters';
 import jsPDF from 'jspdf';
 
 const InvoicePage = () => {
@@ -121,7 +122,7 @@ const InvoicePage = () => {
     doc.text(`Date: ${date}`, 14, 24);
     doc.text(`Party: ${parties?.find((item) => item.id === partyId)?.name ?? ''}`, 14, 32);
     doc.text(`Total CTS: ${totals.totalCts.toFixed(2)}`, 14, 40);
-    doc.text(`Total Amount: ₹ ${totals.totalAmount.toFixed(2)}`, 14, 48);
+    doc.text(`Total Amount: ${formatCurrency(totals.totalAmount)}`, 14, 48);
     doc.save(`${invoiceNo}.pdf`);
   };
 
@@ -185,9 +186,11 @@ const InvoicePage = () => {
     />,
     <Input
       key={`${item.id}-amount`}
-      type="number"
-      value={item.amount ?? 0}
-      onChange={(event) => updateLineItem(index, 'amount', event.target.value)}
+      type="text"
+      value={formatCurrency(item.amount ?? 0)}
+      onChange={(event) =>
+        updateLineItem(index, 'amount', String(parseCurrencyInput(event.target.value)))
+      }
     />
   ]);
 
@@ -264,11 +267,11 @@ const InvoicePage = () => {
             </div>
             <div>
               <label className="text-xs uppercase text-slate-500">Total Amount</label>
-              <Input value={totals.totalAmount.toFixed(2)} readOnly />
+              <Input value={formatCurrency(totals.totalAmount)} readOnly />
             </div>
             <div>
               <label className="text-xs uppercase text-slate-500">Avg Price</label>
-              <Input value={totals.averagePrice.toFixed(2)} readOnly />
+              <Input value={formatCurrency(totals.averagePrice)} readOnly />
             </div>
           </div>
         </div>

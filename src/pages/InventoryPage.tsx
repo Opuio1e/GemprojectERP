@@ -9,6 +9,7 @@ import SummaryCard from '../components/SummaryCard';
 import { calculateInventorySummary } from '../utils/calculations';
 import { importWorkbook } from '../utils/importExport';
 import { logAudit } from '../utils/audit';
+import { formatCurrency } from '../utils/formatters';
 
 const InventoryPage = () => {
   const records = useLiveQuery(() => db.inventoryRecords.toArray(), []);
@@ -105,7 +106,7 @@ const InventoryPage = () => {
       record.size ?? '-',
       record.description ?? '-',
       record.cts.toFixed(2),
-      record.amount.toFixed(2),
+      formatCurrency(record.amount),
       record.status ?? 'available'
     ];
   });
@@ -137,7 +138,7 @@ const InventoryPage = () => {
         <div className="grid gap-3 md:grid-cols-3">
           <SummaryCard title="Records" value={summary.totalRecords} footer="Visible records" />
           <SummaryCard title="Remaining CTS" value={summary.remainingCts.toFixed(2)} />
-          <SummaryCard title="Remaining Amount" value={`₹ ${summary.remainingAmount.toFixed(2)}`} />
+          <SummaryCard title="Remaining Amount" value={formatCurrency(summary.remainingAmount)} />
         </div>
       </div>
 

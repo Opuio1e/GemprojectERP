@@ -12,6 +12,10 @@ import type {
 import { logAudit } from './audit';
 
 export const seedDatabase = async () => {
+  const shouldSeed =
+    import.meta.env.DEV && import.meta.env.VITE_SEED_DATABASE === 'true';
+  if (!shouldSeed) return;
+
   const partyCount = await db.parties.count();
   if (partyCount > 0) return;
 

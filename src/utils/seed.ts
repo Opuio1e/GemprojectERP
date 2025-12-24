@@ -1,4 +1,3 @@
-export const seedDatabase = async () => {};
 import { nanoid } from 'nanoid';
 import { db } from '../db';
 import type {

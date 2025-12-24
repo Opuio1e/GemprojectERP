@@ -58,7 +58,6 @@ const CashbookPage = () => {
 
   const rows = rowsWithBalance.map((entry) => [
     entry.date,
-    entry.partyId ?? '-',
     parties?.find((party) => party.id === entry.partyId)?.name ?? '-',
     lots?.find((lot) => lot.id === entry.lotId)?.lotNo ?? '-',
     entry.process ?? '-',
@@ -89,11 +88,6 @@ const CashbookPage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Party</label>
-            <Input
-              placeholder="Enter party name"
-              value={partyId}
-              onChange={(event) => setPartyId(event.target.value)}
-            />
             <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
               <option value="">Select Party</option>
               {parties?.map((party) => (

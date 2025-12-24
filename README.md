@@ -1,38 +1,60 @@
-# GemprojectERP
+# Gemproject ERP (Static Web App)
 
-A Django project. Use the steps below to set up a local development environment.
+A static, GitHub Pages-ready ERP interface that mirrors the Excel workflows for inventory, invoicing, memos, production tracking, cashbook, and reporting. Data is stored locally in the browser with IndexedDB, and Excel import/export is supported.
 
-## Prerequisites
-- Python 3.11+ (recommended)
-- pip
-- virtualenv (optional but recommended)
+## Features
+- Inventory / Sell Records table with filters, selection, and summary totals.
+- Invoice form with auto totals, printable view, and PDF export.
+- Memo In/Out tracking with stage transitions and lock state on closed memos.
+- Production tracking with stage yield, reject, and wastage totals.
+- Cashbook / ledger with running balance and posting lock.
+- Reporting dashboard and workbook export.
+- IndexedDB persistence via Dexie with audit log.
 
-## Setup
-1. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
+## Tech Stack
+- Vite + React + TypeScript
+- Tailwind CSS
+- Dexie (IndexedDB)
+- SheetJS (XLSX)
+- jsPDF
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Getting Started (Vite Dev Server)
+```bash
+npm install
+npm run dev
+```
 
-3. Configure environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` to provide values for:
-   - `SECRET_KEY`: secret key for Django.
-   - `DEBUG`: `True` for development, `False` for production.
-   - `ALLOWED_HOSTS`: comma-separated list of allowed hosts (e.g., `localhost,127.0.0.1`).
-   - `DATABASE_URL`: optional database URL (e.g., `postgres://USER:PASSWORD@HOST:PORT/NAME`). Leave blank to use the default SQLite database.
+Open http://localhost:5173 to view the app.
 
-4. Apply migrations and start the development server:
-   ```bash
-   python manage.py migrate
-   python manage.py runserver
-   ```
+## Build
+```bash
+npm run build
+```
 
-The application will be available at http://127.0.0.1:8000/ by default.
+## Serve the built app with Django
+The Django server expects the compiled `dist/` bundle. Build the app, then start the Django server:
+```bash
+npm run build
+python manage.py runserver
+```
+
+Open http://127.0.0.1:8000 to view the app via Django.
+
+## Import Workbook
+1. Click **Import Workbook** on the Inventory or Settings page.
+2. Select the provided `Copy of Working Copy.xlsx` file.
+3. Review the import summary and verify totals match the Excel workbook.
+
+## Export Workbook
+Use **Export Workbook (XLSX)** from the Reporting or Settings page to download a multi-sheet export.
+
+## GitHub Pages Deployment
+This project is configured for GitHub Pages using GitHub Actions.
+
+1. Push the repo to GitHub.
+2. Update the repository settings to enable GitHub Pages for the `gh-pages` branch.
+3. The workflow in `.github/workflows/deploy.yml` will build and deploy automatically on `main`.
+
+## Notes
+- The app is fully static and runs entirely in the browser.
+- Routing uses relative base paths so it works on `https://username.github.io/<repo>`.

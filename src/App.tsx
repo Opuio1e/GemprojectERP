@@ -7,14 +7,8 @@ import ProductionPage from './pages/ProductionPage';
 import CashbookPage from './pages/CashbookPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
-import { useEffect } from 'react';
-import { seedDatabase } from './utils/seed';
 
 const App = () => {
-  useEffect(() => {
-    seedDatabase();
-  }, []);
-
   return (
     <PageLayout>
       <Routes>

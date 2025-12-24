@@ -98,6 +98,7 @@ const InventoryPage = () => {
       />,
       record.sellId ?? '-',
       record.date,
+      party?.name ?? record.partyId ?? '-',
       party?.name ?? '-',
       lot?.lotNo ?? '-',
       record.format ?? '-',
@@ -137,6 +138,7 @@ const InventoryPage = () => {
         <div className="grid gap-3 md:grid-cols-3">
           <SummaryCard title="Records" value={summary.totalRecords} footer="Visible records" />
           <SummaryCard title="Remaining CTS" value={summary.remainingCts.toFixed(2)} />
+          <SummaryCard title="Remaining Amount" value={`฿ ${summary.remainingAmount.toFixed(2)}`} />
           <SummaryCard title="Remaining Amount" value={`₹ ${summary.remainingAmount.toFixed(2)}`} />
         </div>
       </div>

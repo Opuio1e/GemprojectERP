@@ -59,6 +59,7 @@ const MemoPage = () => {
   const rows = (memos ?? []).map((memo) => [
     memo.memoNo,
     memo.date,
+    memo.partyId ?? '-',
     parties?.find((party) => party.id === memo.partyId)?.name ?? '-',
     lots?.find((lot) => lot.id === memo.lotId)?.lotNo ?? '-',
     memo.stage,
@@ -92,6 +93,11 @@ const MemoPage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Party</label>
+            <Input
+              placeholder="Enter party name"
+              value={partyId}
+              onChange={(event) => setPartyId(event.target.value)}
+            />
             <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
               <option value="">Select Party</option>
               {parties?.map((party) => (

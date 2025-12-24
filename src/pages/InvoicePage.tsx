@@ -119,9 +119,6 @@ const InvoicePage = () => {
     const doc = new jsPDF();
     doc.text(`Invoice ${invoiceNo}`, 14, 16);
     doc.text(`Date: ${date}`, 14, 24);
-    doc.text(`Party: ${partyId}`, 14, 32);
-    doc.text(`Total CTS: ${totals.totalCts.toFixed(2)}`, 14, 40);
-    doc.text(`Total Amount: ฿ ${totals.totalAmount.toFixed(2)}`, 14, 48);
     doc.text(`Party: ${parties?.find((item) => item.id === partyId)?.name ?? ''}`, 14, 32);
     doc.text(`Total CTS: ${totals.totalCts.toFixed(2)}`, 14, 40);
     doc.text(`Total Amount: ₹ ${totals.totalAmount.toFixed(2)}`, 14, 48);
@@ -225,11 +222,6 @@ const InvoicePage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Party</label>
-            <Input
-              placeholder="Enter party name"
-              value={partyId}
-              onChange={(event) => setPartyId(event.target.value)}
-            />
             <Select value={partyId} onChange={(event) => setPartyId(event.target.value)}>
               <option value="">Select Party</option>
               {parties?.map((party) => (
@@ -245,17 +237,6 @@ const InvoicePage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Sell ID</label>
-            <Input
-              list="sell-id-list"
-              placeholder="Enter Sell ID"
-              value={sellId}
-              onChange={(event) => handleSellSelect(event.target.value)}
-            />
-            <datalist id="sell-id-list">
-              {sellRecords?.map((record) => (
-                <option key={record.id} value={record.sellId} />
-              ))}
-            </datalist>
             <Select value={sellId} onChange={(event) => handleSellSelect(event.target.value)}>
               <option value="">Select Sell ID</option>
               {sellRecords?.map((record) => (
@@ -283,7 +264,6 @@ const InvoicePage = () => {
             </div>
             <div>
               <label className="text-xs uppercase text-slate-500">Total Amount</label>
-              <Input value={`฿ ${totals.totalAmount.toFixed(2)}`} readOnly />
               <Input value={totals.totalAmount.toFixed(2)} readOnly />
             </div>
             <div>

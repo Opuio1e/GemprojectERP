@@ -8,7 +8,17 @@ import Select from '../components/Select';
 import { db } from '../db';
 import { logAudit } from '../utils/audit';
 
-const stages = ['Acid', 'Heat', 'Rough', 'Preform', 'Cutting'];
+const stages = [
+  'Acid',
+  'Heat 1 Rough',
+  'Heat 2 Rough',
+  'Rough to Preform',
+  'Rough to Calibrate',
+  'Preform to Calibrate',
+  'Preform to Heat',
+  'Preform to Cutting',
+  'Rough to Cutting'
+];
 
 const MemoPage = () => {
   const parties = useLiveQuery(() => db.parties.toArray(), []);
@@ -19,6 +29,7 @@ const MemoPage = () => {
   const [partyId, setPartyId] = useState('');
   const [partyName, setPartyName] = useState('');
   const [lotId, setLotId] = useState('');
+  const [lotNo, setLotNo] = useState('');
   const [stage, setStage] = useState(stages[0]);
   const [direction, setDirection] = useState<'in' | 'out'>('out');
   const [notes, setNotes] = useState('');
@@ -40,14 +51,32 @@ const MemoPage = () => {
     return id;
   };
 
+  const resolveLotId = async (number: string) => {
+    const trimmedNumber = number.trim();
+    if (!trimmedNumber) return '';
+    const currentLots = lots ?? (await db.lots.toArray());
+    const existing = currentLots.find(
+      (lot) => lot.lotNo.trim().toLowerCase() === trimmedNumber.toLowerCase()
+    );
+    if (existing) {
+      setLotId(existing.id);
+      return existing.id;
+    }
+    const id = nanoid();
+    await db.lots.add({ id, lotNo: trimmedNumber });
+    setLotId(id);
+    return id;
+  };
+
   const addMemo = async () => {
     const resolvedPartyId = await resolvePartyId(partyName);
+    const resolvedLotId = await resolveLotId(lotNo);
     await db.memos.add({
       id: nanoid(),
       memoNo,
       date,
       partyId: resolvedPartyId,
-      lotId,
+      lotId: resolvedLotId,
       stage,
       direction,
       status: 'open',
@@ -159,14 +188,23 @@ const MemoPage = () => {
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Lot</label>
-            <Select value={lotId} onChange={(event) => setLotId(event.target.value)}>
-              <option value="">Select Lot</option>
+            <Input
+              list="memo-lot-list"
+              value={lotNo}
+              onChange={(event) => {
+                const value = event.target.value;
+                setLotNo(value);
+                const matched = lots?.find(
+                  (lot) => lot.lotNo.trim().toLowerCase() === value.trim().toLowerCase()
+                );
+                setLotId(matched?.id ?? '');
+              }}
+            />
+            <datalist id="memo-lot-list">
               {lots?.map((lot) => (
-                <option key={lot.id} value={lot.id}>
-                  {lot.lotNo}
-                </option>
+                <option key={lot.id} value={lot.lotNo} />
               ))}
-            </Select>
+            </datalist>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Stage</label>

@@ -24,6 +24,7 @@ const ProductionPage = () => {
   const lots = useLiveQuery(() => db.lots.toArray(), []);
   const events = useLiveQuery(() => db.productionStages.toArray(), []);
   const [lotId, setLotId] = useState('');
+  const [lotNo, setLotNo] = useState('');
   const [stage, setStage] = useState(stages[0]);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [inputCts, setInputCts] = useState('');
@@ -32,10 +33,28 @@ const ProductionPage = () => {
   const [wastageCts, setWastageCts] = useState('');
   const [notes, setNotes] = useState('');
 
+  const resolveLotId = async (number: string) => {
+    const trimmedNumber = number.trim();
+    if (!trimmedNumber) return '';
+    const currentLots = lots ?? (await db.lots.toArray());
+    const existing = currentLots.find(
+      (lot) => lot.lotNo.trim().toLowerCase() === trimmedNumber.toLowerCase()
+    );
+    if (existing) {
+      setLotId(existing.id);
+      return existing.id;
+    }
+    const id = nanoid();
+    await db.lots.add({ id, lotNo: trimmedNumber });
+    setLotId(id);
+    return id;
+  };
+
   const addEvent = async () => {
+    const resolvedLotId = await resolveLotId(lotNo);
     await db.productionStages.add({
       id: nanoid(),
-      lotId,
+      lotId: resolvedLotId,
       stage,
       date,
       inputCts: Number(inputCts || 0),
@@ -44,7 +63,7 @@ const ProductionPage = () => {
       wastageCts: Number(wastageCts || 0),
       notes
     });
-    await logAudit('production', lotId, 'create', 'Added stage event');
+    await logAudit('production', resolvedLotId, 'create', 'Added stage event');
     setNotes('');
   };
 
@@ -99,14 +118,23 @@ const ProductionPage = () => {
         <div className="mt-4 grid gap-4 md:grid-cols-4">
           <div>
             <label className="text-xs uppercase text-slate-500">Lot</label>
-            <Select value={lotId} onChange={(event) => setLotId(event.target.value)}>
-              <option value="">Select Lot</option>
+            <Input
+              list="production-lot-list"
+              value={lotNo}
+              onChange={(event) => {
+                const value = event.target.value;
+                setLotNo(value);
+                const matched = lots?.find(
+                  (lot) => lot.lotNo.trim().toLowerCase() === value.trim().toLowerCase()
+                );
+                setLotId(matched?.id ?? '');
+              }}
+            />
+            <datalist id="production-lot-list">
               {lots?.map((lot) => (
-                <option key={lot.id} value={lot.id}>
-                  {lot.lotNo}
-                </option>
+                <option key={lot.id} value={lot.lotNo} />
               ))}
-            </Select>
+            </datalist>
           </div>
           <div>
             <label className="text-xs uppercase text-slate-500">Stage</label>

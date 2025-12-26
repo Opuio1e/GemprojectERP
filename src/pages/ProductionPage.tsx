@@ -38,6 +38,11 @@ const ProductionPage = () => {
     setNotes('');
   };
 
+  const deleteEvent = async (id: string) => {
+    await db.productionStages.delete(id);
+    await logAudit('production', id, 'delete', 'Deleted stage event');
+  };
+
   const headers = [
     'Lot',
     'Stage',
@@ -47,7 +52,8 @@ const ProductionPage = () => {
     'Reject CTS',
     'Wastage CTS',
     'Yield %',
-    'Notes'
+    'Notes',
+    'Action'
   ];
 
   const rows = (events ?? []).map((event) => {
@@ -63,7 +69,15 @@ const ProductionPage = () => {
       event.rejectCts ?? 0,
       event.wastageCts ?? 0,
       `${yieldPercent}%`,
-      event.notes ?? '-'
+      event.notes ?? '-',
+      <Button
+        key={`${event.id}-delete`}
+        variant="ghost"
+        className="text-red-500 hover:text-red-600"
+        onClick={() => deleteEvent(event.id)}
+      >
+        Delete
+      </Button>
     ];
   });
 

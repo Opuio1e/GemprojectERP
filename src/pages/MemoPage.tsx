@@ -7,6 +7,7 @@ import Input from '../components/Input';
 import Select from '../components/Select';
 import { db } from '../db';
 import { logAudit } from '../utils/audit';
+import { exportMemoWorkbook } from '../utils/importExport';
 
 const stages = ['Acid', 'Heat', 'Rough', 'Preform', 'Cutting'];
 
@@ -162,7 +163,10 @@ const MemoPage = () => {
             <Input value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={exportMemoWorkbook}>
+            Export XLSX
+          </Button>
           <Button variant="primary" onClick={addMemo}>
             Save Memo
           </Button>

@@ -10,6 +10,7 @@ import type { InvoiceLineItem } from '../types';
 import { calculateInvoiceTotals } from '../utils/calculations';
 import { logAudit } from '../utils/audit';
 import { formatCurrency, parseCurrencyInput } from '../utils/formatters';
+import { exportInvoiceWorkbook } from '../utils/importExport';
 import jsPDF from 'jspdf';
 
 const InvoicePage = () => {
@@ -235,6 +236,9 @@ const InvoicePage = () => {
             </Button>
             <Button variant="ghost" onClick={exportPdf}>
               Export PDF
+            </Button>
+            <Button variant="secondary" onClick={exportInvoiceWorkbook}>
+              Export XLSX
             </Button>
           </div>
         </div>

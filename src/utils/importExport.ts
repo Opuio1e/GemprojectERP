@@ -200,6 +200,75 @@ export const exportWorkbook = async () => {
   await logAudit('export', 'workbook', 'export', 'Exported workbook');
 };
 
+export const exportMemoWorkbook = async () => {
+  const workbook = XLSX.utils.book_new();
+  const memos = await db.memos.toArray();
+  const parties = await db.parties.toArray();
+  const lots = await db.lots.toArray();
+
+  const memoRows = memos.map((memo) => ({
+    memoNo: memo.memoNo,
+    date: memo.date,
+    party: parties.find((party) => party.id === memo.partyId)?.name ?? '',
+    lot: lots.find((lot) => lot.id === memo.lotId)?.lotNo ?? '',
+    stage: memo.stage,
+    direction: memo.direction,
+    status: memo.status,
+    notes: memo.notes ?? ''
+  }));
+
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(memoRows), 'Memos');
+  XLSX.writeFile(workbook, 'memos-export.xlsx');
+  await logAudit('export', 'memos', 'export', 'Exported memo workbook');
+};
+
+export const exportInvoiceWorkbook = async () => {
+  const workbook = XLSX.utils.book_new();
+  const invoices = await db.invoices.toArray();
+  const parties = await db.parties.toArray();
+
+  const invoiceRows = invoices.map((invoice) => ({
+    invoiceNo: invoice.invoiceNo,
+    date: invoice.date,
+    party: parties.find((party) => party.id === invoice.partyId)?.name ?? '',
+    sellId: invoice.sellId ?? '',
+    transactionType: invoice.transactionType ?? '',
+    totalCts: invoice.totalCts,
+    totalAmount: invoice.totalAmount,
+    averagePrice: invoice.averagePrice
+  }));
+
+  const lineItemRows = invoices.flatMap((invoice) => {
+    const partyName = parties.find((party) => party.id === invoice.partyId)?.name ?? '';
+    return invoice.lineItems.map((item) => ({
+      invoiceNo: invoice.invoiceNo,
+      date: invoice.date,
+      party: partyName,
+      sellId: invoice.sellId ?? '',
+      transactionType: invoice.transactionType ?? '',
+      srNo: item.srNo,
+      lotNo: item.lotNo ?? '',
+      description: item.description ?? '',
+      shape: item.shape ?? '',
+      size: item.size ?? '',
+      grade: item.grade ?? '',
+      pcs: item.pcs ?? 0,
+      cts: item.cts ?? 0,
+      price: item.price ?? 0,
+      amount: item.amount ?? 0
+    }));
+  });
+
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(invoiceRows), 'Invoices');
+  XLSX.utils.book_append_sheet(
+    workbook,
+    XLSX.utils.json_to_sheet(lineItemRows),
+    'InvoiceLineItems'
+  );
+  XLSX.writeFile(workbook, 'invoices-export.xlsx');
+  await logAudit('export', 'invoices', 'export', 'Exported invoice workbook');
+};
+
 export const exportCsvReport = async (name: string, rows: Record<string, unknown>[]) => {
   const sheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();

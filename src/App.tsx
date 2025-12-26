@@ -11,7 +11,7 @@ const App = () => {
   return (
     <PageLayout>
       <Routes>
-        <Route path="/" element={<Navigate to="/inventory" replace />} />
+        <Route path="/" element={<Navigate to="/memos" replace />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/invoice" element={<InvoicePage />} />
         <Route path="/memos" element={<MemoPage />} />

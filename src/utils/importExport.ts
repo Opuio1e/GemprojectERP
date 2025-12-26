@@ -5,6 +5,7 @@ import type {
   ImportSummary,
   InventoryRecord,
   Invoice,
+  InvoiceLineItem,
   LedgerEntry,
   Lot,
   Memo,
@@ -24,6 +25,126 @@ const mapRow = (row: Record<string, unknown>) => {
     mapped[normalizeHeader(key)] = value;
   });
   return mapped;
+};
+
+const sanitizeSheetName = (name: string, fallback: string) => {
+  const cleaned = name.replace(/[\\/?*[\]:]/g, '-').slice(0, 31).trim();
+  return cleaned || fallback;
+};
+
+const buildMemoFormSheet = ({
+  memoNo = '',
+  memoDate = '',
+  partyName = '',
+  partyPhone = '',
+  lot,
+  notes = ''
+}: {
+  memoNo?: string;
+  memoDate?: string;
+  partyName?: string;
+  partyPhone?: string;
+  lot?: Lot;
+  notes?: string;
+}) => {
+  const rows = [
+    ['RECUT'],
+    ['Memo No', memoNo, '', '', '', 'Date', memoDate],
+    ['To/From', partyName, '', '', '', 'Tel', partyPhone],
+    [],
+    ['No.', 'Code', 'Description', 'Size', 'PCS', 'Weight', 'Return', 'Kept', 'Price', 'Remark'],
+    [
+      1,
+      lot?.lotNo ?? '',
+      lot?.description ?? '',
+      lot?.size ?? '',
+      lot?.totalPcs ?? '',
+      lot?.totalCts ?? '',
+      '',
+      '',
+      '',
+      notes
+    ]
+  ];
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  sheet['!cols'] = [
+    { wch: 6 },
+    { wch: 14 },
+    { wch: 24 },
+    { wch: 12 },
+    { wch: 8 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 18 }
+  ];
+  return sheet;
+};
+
+const buildInvoiceFormSheet = ({
+  invoiceNo = '',
+  invoiceDate = '',
+  partyName = '',
+  sellId = '',
+  transactionType = '',
+  averagePrice = '',
+  totalCts = '',
+  totalAmount = '',
+  lineItems = []
+}: {
+  invoiceNo?: string;
+  invoiceDate?: string;
+  partyName?: string;
+  sellId?: string;
+  transactionType?: string;
+  averagePrice?: number | string;
+  totalCts?: number | string;
+  totalAmount?: number | string;
+  lineItems?: InvoiceLineItem[];
+}) => {
+  const rows = [
+    ['INVOICE'],
+    ['Date', invoiceDate, '', '', '', 'Invoice No', invoiceNo],
+    ['Party', partyName, '', '', '', 'Sell ID', sellId],
+    ['Transaction Type', transactionType, '', '', '', 'Average Price', averagePrice],
+    ['Total CTS', totalCts, '', '', '', 'Total Amount', totalAmount],
+    [],
+    ['SR No', 'Lot No', 'Description', 'Shape', 'Size', 'Grade', 'PCS', 'CTS', 'Price', 'Amount', 'Remarks']
+  ];
+
+  const itemRows =
+    lineItems.length > 0
+      ? lineItems.map((item) => [
+          item.srNo,
+          item.lotNo ?? '',
+          item.description ?? '',
+          item.shape ?? '',
+          item.size ?? '',
+          item.grade ?? '',
+          item.pcs ?? '',
+          item.cts ?? '',
+          item.price ?? '',
+          item.amount ?? '',
+          ''
+        ])
+      : [[1, '', '', '', '', '', '', '', '', '', '']];
+
+  const sheet = XLSX.utils.aoa_to_sheet([...rows, ...itemRows]);
+  sheet['!cols'] = [
+    { wch: 6 },
+    { wch: 14 },
+    { wch: 24 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 16 }
+  ];
+  return sheet;
 };
 
 export const importWorkbook = async (file: File): Promise<ImportSummary> => {
@@ -186,6 +307,52 @@ export const exportWorkbook = async () => {
   const memos = await db.memos.toArray();
   const production = await db.productionStages.toArray();
   const ledger = await db.ledgerEntries.toArray();
+
+  if (memos.length === 0) {
+    XLSX.utils.book_append_sheet(workbook, buildMemoFormSheet({}), 'Memo Template');
+  } else {
+    memos.forEach((memo, index) => {
+      const party = parties.find((item) => item.id === memo.partyId);
+      const lot = lots.find((item) => item.id === memo.lotId);
+      const sheet = buildMemoFormSheet({
+        memoNo: memo.memoNo,
+        memoDate: memo.date,
+        partyName: party?.name ?? '',
+        partyPhone: party?.phone ?? '',
+        lot,
+        notes: memo.notes ?? ''
+      });
+      XLSX.utils.book_append_sheet(
+        workbook,
+        sheet,
+        sanitizeSheetName(`Memo-${memo.memoNo || index + 1}`, `Memo-${index + 1}`)
+      );
+    });
+  }
+
+  if (invoices.length === 0) {
+    XLSX.utils.book_append_sheet(workbook, buildInvoiceFormSheet({}), 'Invoice Template');
+  } else {
+    invoices.forEach((invoice, index) => {
+      const party = parties.find((item) => item.id === invoice.partyId);
+      const sheet = buildInvoiceFormSheet({
+        invoiceNo: invoice.invoiceNo,
+        invoiceDate: invoice.date,
+        partyName: party?.name ?? '',
+        sellId: invoice.sellId ?? '',
+        transactionType: invoice.transactionType ?? '',
+        averagePrice: invoice.averagePrice?.toFixed(2) ?? '',
+        totalCts: invoice.totalCts?.toFixed(2) ?? '',
+        totalAmount: invoice.totalAmount?.toFixed(2) ?? '',
+        lineItems: invoice.lineItems ?? []
+      });
+      XLSX.utils.book_append_sheet(
+        workbook,
+        sheet,
+        sanitizeSheetName(`Invoice-${invoice.invoiceNo || index + 1}`, `Invoice-${index + 1}`)
+      );
+    });
+  }
 
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(parties), 'Parties');
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(lots), 'Lots');

@@ -14,13 +14,25 @@ const SettingsPage = () => {
     await importWorkbook(file);
   };
 
-  const headers = ['Timestamp', 'Entity', 'Action', 'Summary'];
+  const deleteAuditEntry = async (id: string) => {
+    await db.auditLog.delete(id);
+  };
+
+  const headers = ['Timestamp', 'Entity', 'Action', 'Summary', 'Delete'];
 
   const rows = (audits ?? []).map((entry) => [
     new Date(entry.timestamp).toLocaleString(),
     `${entry.entityType} (${entry.entityId})`,
     entry.action,
-    entry.summary
+    entry.summary,
+    <Button
+      key={`${entry.id}-delete`}
+      variant="ghost"
+      className="text-red-500 hover:text-red-600"
+      onClick={() => deleteAuditEntry(entry.id)}
+    >
+      Delete
+    </Button>
   ]);
 
   return (

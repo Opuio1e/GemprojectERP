@@ -21,21 +21,21 @@ const InvoicePage = () => {
   const [sellId, setSellId] = useState('');
   const [invoiceNo, setInvoiceNo] = useState('INV-001');
   const [transactionType, setTransactionType] = useState('Cash');
-  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
-    {
-      id: nanoid(),
-      srNo: 1,
-      lotNo: '',
-      description: '',
-      shape: '',
-      size: '',
-      grade: '',
-      pcs: 0,
-      cts: 0,
-      price: 0,
-      amount: 0
-    }
-  ]);
+  const createLineItem = (srNo: number): InvoiceLineItem => ({
+    id: nanoid(),
+    srNo,
+    lotNo: '',
+    description: '',
+    shape: '',
+    size: '',
+    grade: '',
+    pcs: 0,
+    cts: 0,
+    price: 0,
+    amount: 0
+  });
+
+  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([createLineItem(1)]);
 
   const totals = useMemo(() => calculateInvoiceTotals(lineItems), [lineItems]);
 
@@ -79,22 +79,17 @@ const InvoicePage = () => {
   };
 
   const addLineItem = () => {
-    setLineItems((prev) => [
-      ...prev,
-      {
-        id: nanoid(),
-        srNo: prev.length + 1,
-        lotNo: '',
-        description: '',
-        shape: '',
-        size: '',
-        grade: '',
-        pcs: 0,
-        cts: 0,
-        price: 0,
-        amount: 0
+    setLineItems((prev) => [...prev, createLineItem(prev.length + 1)]);
+  };
+
+  const removeLineItem = (id: string) => {
+    setLineItems((prev) => {
+      if (prev.length === 1) {
+        return [createLineItem(1)];
       }
-    ]);
+      const remaining = prev.filter((item) => item.id !== id);
+      return remaining.map((item, index) => ({ ...item, srNo: index + 1 }));
+    });
   };
 
   const clearForm = () => {
@@ -102,21 +97,7 @@ const InvoicePage = () => {
     setPartyId('');
     setPartyName('');
     setInvoiceNo(`INV-${Math.floor(Math.random() * 900 + 100)}`);
-    setLineItems([
-      {
-        id: nanoid(),
-        srNo: 1,
-        lotNo: '',
-        description: '',
-        shape: '',
-        size: '',
-        grade: '',
-        pcs: 0,
-        cts: 0,
-        price: 0,
-        amount: 0
-      }
-    ]);
+    setLineItems([createLineItem(1)]);
   };
 
   const saveInvoice = async () => {
@@ -157,7 +138,8 @@ const InvoicePage = () => {
     'PCS',
     'CTS',
     'Price',
-    'Amount'
+    'Amount',
+    'Action'
   ];
 
   const rows = lineItems.map((item, index) => [
@@ -212,7 +194,10 @@ const InvoicePage = () => {
       onChange={(event) =>
         updateLineItem(index, 'amount', String(parseCurrencyInput(event.target.value)))
       }
-    />
+    />,
+    <Button variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => removeLineItem(item.id)}>
+      Delete
+    </Button>
   ]);
 
   return (

@@ -61,6 +61,11 @@ const CashbookPage = () => {
     await logAudit('cashbook', id, 'post', 'Posted ledger entry');
   };
 
+  const deleteEntry = async (id: string) => {
+    await db.ledgerEntries.delete(id);
+    await logAudit('cashbook', id, 'delete', 'Deleted ledger entry');
+  };
+
   const rowsWithBalance = useMemo(() => calculateLedgerBalance(entries ?? []), [entries]);
 
   const headers = [
@@ -72,7 +77,8 @@ const CashbookPage = () => {
     'Credit',
     'Running Balance',
     'Notes',
-    'Status'
+    'Status',
+    'Action'
   ];
 
   const rows = rowsWithBalance.map((entry) => [
@@ -90,7 +96,14 @@ const CashbookPage = () => {
       <Button variant="ghost" onClick={() => postEntry(entry.id)}>
         Post Entry
       </Button>
-    )
+    ),
+    <Button
+      variant="ghost"
+      className="text-red-500 hover:text-red-600"
+      onClick={() => deleteEntry(entry.id)}
+    >
+      Delete
+    </Button>
   ]);
 
   return (

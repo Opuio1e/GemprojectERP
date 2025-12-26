@@ -63,6 +63,11 @@ const MemoPage = () => {
     await logAudit('memo', id, 'lock', 'Closed memo record');
   };
 
+  const deleteMemo = async (id: string) => {
+    await db.memos.delete(id);
+    await logAudit('memo', id, 'delete', 'Deleted memo record');
+  };
+
   const headers = [
     'Memo No',
     'Date',
@@ -75,23 +80,46 @@ const MemoPage = () => {
     'Action'
   ];
 
-  const rows = (memos ?? []).map((memo) => [
-    memo.memoNo,
-    memo.date,
-    parties?.find((party) => party.id === memo.partyId)?.name ?? '-',
-    lots?.find((lot) => lot.id === memo.lotId)?.lotNo ?? '-',
-    memo.stage,
-    memo.direction,
-    memo.status,
-    memo.notes ?? '-',
-    memo.status === 'closed' ? (
-      <span className="text-xs text-slate-400">Locked</span>
-    ) : (
-      <Button variant="ghost" onClick={() => closeMemo(memo.id)}>
-        Close Memo
-      </Button>
-    )
-  ]);
+  const rows = (memos ?? []).map((memo) => {
+    const actionContent =
+      memo.status === 'closed' ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-400">Locked</span>
+          <Button
+            variant="ghost"
+            className="text-red-500 hover:text-red-600"
+            onClick={() => deleteMemo(memo.id)}
+          >
+            Delete
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" onClick={() => closeMemo(memo.id)}>
+            Close Memo
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-red-500 hover:text-red-600"
+            onClick={() => deleteMemo(memo.id)}
+          >
+            Delete
+          </Button>
+        </div>
+      );
+
+    return [
+      memo.memoNo,
+      memo.date,
+      parties?.find((party) => party.id === memo.partyId)?.name ?? '-',
+      lots?.find((lot) => lot.id === memo.lotId)?.lotNo ?? '-',
+      memo.stage,
+      memo.direction,
+      memo.status,
+      memo.notes ?? '-',
+      actionContent
+    ];
+  });
 
   return (
     <div className="space-y-6">

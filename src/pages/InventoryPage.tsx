@@ -61,6 +61,19 @@ const InventoryPage = () => {
     clearSelection();
   };
 
+  const deleteRecord = async (id: string) => {
+    await db.inventoryRecords.delete(id);
+    await logAudit('inventory', id, 'delete', 'Deleted inventory record');
+    setSelectedIds((prev) => prev.filter((item) => item !== id));
+  };
+
+  const deleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    await db.inventoryRecords.where('id').anyOf(selectedIds).delete();
+    await logAudit('inventory', selectedIds.join(','), 'delete', 'Deleted selected inventory records');
+    clearSelection();
+  };
+
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -84,7 +97,8 @@ const InventoryPage = () => {
     'Description',
     'CTS',
     'Amount',
-    'Status'
+    'Status',
+    'Action'
   ];
 
   const rows = filteredRecords.map((record) => {
@@ -107,7 +121,15 @@ const InventoryPage = () => {
       record.description ?? '-',
       record.cts.toFixed(2),
       formatCurrency(record.amount),
-      record.status ?? 'available'
+      record.status ?? 'available',
+      <Button
+        key={`${record.id}-delete`}
+        variant="ghost"
+        className="text-red-500 hover:text-red-600"
+        onClick={() => deleteRecord(record.id)}
+      >
+        Delete
+      </Button>
     ];
   });
 
@@ -131,6 +153,9 @@ const InventoryPage = () => {
             </label>
             <Button variant="primary" onClick={markSold} disabled={selectedIds.length === 0}>
               Sell Selected
+            </Button>
+            <Button variant="ghost" onClick={deleteSelected} disabled={selectedIds.length === 0}>
+              Delete Selected
             </Button>
           </div>
         </div>

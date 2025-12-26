@@ -19,5 +19,34 @@
 
   body {
     background: white;
+    color: #000;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    display: none !important;
+  }
+
+  .print-meta,
+  .print-table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .print-meta td,
+  .print-table th,
+  .print-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    vertical-align: top;
+  }
+
+  .print-label {
+    font-weight: 600;
+    background: #f2f2f2;
   }
 }

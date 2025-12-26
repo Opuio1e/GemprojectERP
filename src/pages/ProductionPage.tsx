@@ -8,7 +8,17 @@ import Select from '../components/Select';
 import { db } from '../db';
 import { logAudit } from '../utils/audit';
 
-const stages = ['Acid', 'Heat', 'Rough', 'Preform', 'Cutting', 'Polish'];
+const stages = [
+  'Acid',
+  'Heat 1 Rough',
+  'Heat 2 Rough',
+  'Rough to Preform',
+  'Rough to Calibrate',
+  'Preform to Calibrate',
+  'Preform to Heat',
+  'Preform to Cutting',
+  'Rough to Cutting'
+];
 
 const ProductionPage = () => {
   const lots = useLiveQuery(() => db.lots.toArray(), []);

@@ -11,7 +11,7 @@ const navItems = [
 ];
 
 const TopNav = () => (
-  <nav className="flex flex-wrap gap-2 border-b border-border bg-white px-6 py-4">
+  <nav className="flex flex-wrap gap-2 border-b border-border bg-white px-6 py-4 print:hidden">
     {navItems.map((item) => (
       <NavLink
         key={item.to}

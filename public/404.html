@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gemproject ERP</title>
+  </head>
+  <body>
+    <script>
+      (function redirectToApp() {
+        var location = window.location;
+        var pathSegmentsToKeep = 1;
+        var basePath = location.pathname
+          .split('/')
+          .slice(0, 1 + pathSegmentsToKeep)
+          .join('/');
+        var redirectPath = location.pathname
+          .split('/')
+          .slice(1 + pathSegmentsToKeep)
+          .join('/')
+          .replace(/&/g, '~and~');
+        var search = location.search
+          ? '&' + location.search.slice(1).replace(/&/g, '~and~')
+          : '';
+
+        location.replace(
+          location.protocol +
+            '//' +
+            location.hostname +
+            (location.port ? ':' + location.port : '') +
+            basePath +
+            '/?/' +
+            redirectPath +
+            search +
+            location.hash,
+        );
+      })();
+    </script>
+  </body>
+</html>

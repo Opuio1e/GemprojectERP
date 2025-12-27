@@ -4,6 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gemproject ERP</title>
+    <script type="text/javascript">
+      (function restorePath() {
+        var location = window.location;
+        if (location.search[1] === '/') {
+          var decoded = location.search
+            .slice(1)
+            .split('&')
+            .map(function (value) {
+              return value.replace(/~and~/g, '&');
+            })
+            .join('?');
+
+          window.history.replaceState(
+            null,
+            null,
+            location.pathname.slice(0, -1) + decoded + location.hash,
+          );
+        }
+      })();
+    </script>
   </head>
   <body class="bg-panel text-slate-900">
     <div id="root"></div>

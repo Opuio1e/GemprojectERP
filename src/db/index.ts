@@ -11,12 +11,27 @@ export type TableName =
   | 'ledger_entries'
   | 'audit_log';
 
+const runtimeSupabaseConfig =
+  typeof window !== 'undefined' ? window.__SUPABASE__ : undefined;
+
 const supabaseUrl =
+  runtimeSupabaseConfig?.VITE_SUPABASE_URL ??
+  runtimeSupabaseConfig?.NEXT_PUBLIC_SUPABASE_URL ??
   import.meta.env.VITE_SUPABASE_URL ??
+  import.meta.env.NEXT_PUBLIC_SUPABASE_URL ??
   'https://mnfmiqxumamtuikgblmc.supabase.co';
 const supabaseAnonKey =
+  runtimeSupabaseConfig?.VITE_SUPABASE_ANON_KEY ??
+  runtimeSupabaseConfig?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ??
   import.meta.env.VITE_SUPABASE_ANON_KEY ??
+  import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ??
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uZm1pcXh1bWFtdHVpa2dibG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3ODkwMzMsImV4cCI6MjA4MjM2NTAzM30.aefpPo_WHWAbLy8oapZtgoxdFdRAulBbpMpu7eyUZ0A';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Supabase configuration missing. Set VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.'
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

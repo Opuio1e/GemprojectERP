@@ -8,6 +8,7 @@ import { fetchTable, insertRow, updateRow, deleteRow } from '../db';
 import { useSupabaseTable } from '../db/useSupabaseTable';
 import type { Lot, Memo, Party } from '../types';
 import { logAudit } from '../utils/audit';
+import { exportMemoWorkbook } from '../utils/importExport';
 
 const stages = [
   'Acid',
@@ -234,7 +235,10 @@ const MemoPage = () => {
             <Input value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" onClick={exportMemoWorkbook}>
+            Export XLSX
+          </Button>
           <Button variant="primary" onClick={addMemo}>
             Save Memo
           </Button>

@@ -220,39 +220,50 @@ const InvoicePage = () => {
   return (
     <div className="space-y-6">
       <div className="print-block hidden print:!block">
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-lg font-semibold">Invoice</h1>
-            <p className="text-xs text-slate-600">Printable invoice summary</p>
+        <div className="print-invoice space-y-4">
+          <div className="print-sheet">
+            <div className="print-top">
+              <div className="print-fields">
+                <div className="print-field">
+                  <span className="print-label">Date</span>
+                  <span className="print-value">{date}</span>
+                </div>
+                <div className="print-field">
+                  <span className="print-label">Party</span>
+                  <span className="print-value">
+                    {parties?.find((item) => item.id === partyId)?.name ?? partyName}
+                  </span>
+                </div>
+                <div className="print-field">
+                  <span className="print-label">Total Amount</span>
+                  <span className="print-value">{formatCurrency(totals.totalAmount)}</span>
+                </div>
+              </div>
+              <div className="print-fields print-fields-right">
+                <div className="print-title">INVOICE</div>
+                <div className="print-field">
+                  <span className="print-label">Invoice No</span>
+                  <span className="print-value">{invoiceNo}</span>
+                </div>
+                <div className="print-field">
+                  <span className="print-label">Sell ID</span>
+                  <span className="print-value">{sellId}</span>
+                </div>
+                <div className="print-field">
+                  <span className="print-label">Average Price</span>
+                  <span className="print-value">{formatCurrency(totals.averagePrice)}</span>
+                </div>
+                <div className="print-field">
+                  <span className="print-label">Transaction Type</span>
+                  <span className="print-value">{transactionType}</span>
+                </div>
+                <div className="print-field">
+                  <span className="print-label">Total CTS</span>
+                  <span className="print-value">{totals.totalCts.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <table className="print-meta w-full text-sm">
-            <tbody>
-              <tr>
-                <td className="print-label">Invoice No</td>
-                <td>{invoiceNo}</td>
-                <td className="print-label">Date</td>
-                <td>{date}</td>
-              </tr>
-              <tr>
-                <td className="print-label">Party</td>
-                <td>{parties?.find((item) => item.id === partyId)?.name ?? partyName}</td>
-                <td className="print-label">Sell ID</td>
-                <td>{sellId}</td>
-              </tr>
-              <tr>
-                <td className="print-label">Total CTS</td>
-                <td>{totals.totalCts.toFixed(2)}</td>
-                <td className="print-label">Total Amount</td>
-                <td>{formatCurrency(totals.totalAmount)}</td>
-              </tr>
-              <tr>
-                <td className="print-label">Avg Price</td>
-                <td>{formatCurrency(totals.averagePrice)}</td>
-                <td className="print-label">Transaction</td>
-                <td>{transactionType}</td>
-              </tr>
-            </tbody>
-          </table>
           <table className="print-table w-full text-xs">
             <thead>
               <tr>

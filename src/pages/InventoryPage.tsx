@@ -1,5 +1,6 @@
 import { useMemo, useState, type ChangeEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { nanoid } from 'nanoid';
 import { db } from '../db';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
@@ -13,6 +14,7 @@ import { formatCurrency } from '../utils/formatters';
 
 const InventoryPage = () => {
   const records = useLiveQuery(() => db.inventoryRecords.toArray(), []);
+  const sellRecords = useLiveQuery(() => db.sellRecords.toArray(), []);
   const parties = useLiveQuery(() => db.parties.toArray(), []);
   const lots = useLiveQuery(() => db.lots.toArray(), []);
   const [search, setSearch] = useState('');
@@ -52,11 +54,57 @@ const InventoryPage = () => {
 
   const clearSelection = () => setSelectedIds([]);
 
+  const generateSellId = async () => {
+    const currentRecords = sellRecords ?? (await db.sellRecords.toArray());
+    const nextNumber =
+      currentRecords.reduce((max, record) => {
+        const match = record.sellId.match(/^SELL-(\d+)$/i);
+        if (!match) return max;
+        return Math.max(max, Number(match[1]));
+      }, 0) + 1;
+    return `SELL-${String(nextNumber).padStart(3, '0')}`;
+  };
+
   const markSold = async () => {
+    if (selectedIds.length === 0) return;
+    const selectedRecords = await db.inventoryRecords.where('id').anyOf(selectedIds).toArray();
+    if (selectedRecords.length === 0) return;
+    const sellId = await generateSellId();
+    const sellDate = new Date().toISOString().slice(0, 10);
+    const partyIds = Array.from(
+      new Set(selectedRecords.map((record) => record.partyId).filter(Boolean))
+    );
+    const partyId = partyIds.length === 1 ? partyIds[0] : undefined;
+    const lineItems = selectedRecords.map((record, index) => {
+      const lot = lots?.find((item) => item.id === record.lotId);
+      const price = record.cts ? record.amount / record.cts : 0;
+      return {
+        id: nanoid(),
+        srNo: index + 1,
+        lotNo: lot?.lotNo ?? '',
+        description: record.description ?? '',
+        shape: record.shape ?? '',
+        size: record.size ?? '',
+        grade: lot?.grade ?? '',
+        cts: record.cts,
+        price,
+        amount: record.amount
+      };
+    });
+
+    await db.sellRecords.add({
+      id: nanoid(),
+      sellId,
+      date: sellDate,
+      partyId,
+      lineItems
+    });
+
     await db.inventoryRecords
       .where('id')
       .anyOf(selectedIds)
-      .modify({ status: 'sold' });
+      .modify({ status: 'sold', sellId });
+    await logAudit('sell', sellId, 'create', 'Created sell record from inventory');
     await logAudit('inventory', selectedIds.join(','), 'update', 'Marked records as sold');
     clearSelection();
   };

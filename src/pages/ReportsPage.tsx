@@ -1,6 +1,6 @@
-import { useLiveQuery } from 'dexie-react-hooks';
 import Button from '../components/Button';
-import { db } from '../db';
+import { useSupabaseTable } from '../db/useSupabaseTable';
+import type { LedgerEntry, Memo, ProductionStageEvent } from '../types';
 import { exportCsvReport, exportWorkbook } from '../utils/importExport';
 
 const reportCards = [
@@ -27,9 +27,9 @@ const reportCards = [
 ];
 
 const ReportsPage = () => {
-  const memos = useLiveQuery(() => db.memos.toArray(), []);
-  const production = useLiveQuery(() => db.productionStages.toArray(), []);
-  const ledger = useLiveQuery(() => db.ledgerEntries.toArray(), []);
+  const { data: memos } = useSupabaseTable<Memo>('memos');
+  const { data: production } = useSupabaseTable<ProductionStageEvent>('production_stages');
+  const { data: ledger } = useSupabaseTable<LedgerEntry>('ledger_entries');
 
   const handleExport = async (key: string) => {
     if (key === 'memo') {

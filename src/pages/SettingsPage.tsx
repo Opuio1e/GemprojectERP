@@ -1,21 +1,24 @@
-import { useLiveQuery } from 'dexie-react-hooks';
 import type { ChangeEvent } from 'react';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
-import { db } from '../db';
+import { deleteRow } from '../db';
+import { useSupabaseTable } from '../db/useSupabaseTable';
+import type { AuditLog } from '../types';
 import { exportWorkbook, importWorkbook } from '../utils/importExport';
 
 const SettingsPage = () => {
-  const audits = useLiveQuery(() => db.auditLog.toArray(), []);
+  const { data: audits, refresh: refreshAudits } = useSupabaseTable<AuditLog>('audit_log');
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     await importWorkbook(file);
+    await refreshAudits();
   };
 
   const deleteAuditEntry = async (id: string) => {
-    await db.auditLog.delete(id);
+    await deleteRow('audit_log', id);
+    await refreshAudits();
   };
 
   const headers = ['Timestamp', 'Entity', 'Action', 'Summary', 'Delete'];

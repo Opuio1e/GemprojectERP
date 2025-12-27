@@ -1,20 +1,21 @@
 import { useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { nanoid } from 'nanoid';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import { db } from '../db';
-import type { InvoiceLineItem } from '../types';
+import { fetchTable, insertRow } from '../db';
+import { useSupabaseTable } from '../db/useSupabaseTable';
+import type { Invoice, InvoiceLineItem, Party, SellRecord } from '../types';
 import { calculateInvoiceTotals } from '../utils/calculations';
 import { logAudit } from '../utils/audit';
 import { formatCurrency, parseCurrencyInput } from '../utils/formatters';
 import jsPDF from 'jspdf';
 
 const InvoicePage = () => {
-  const parties = useLiveQuery(() => db.parties.toArray(), []);
-  const sellRecords = useLiveQuery(() => db.sellRecords.toArray(), []);
+  const { data: parties, refresh: refreshParties } = useSupabaseTable<Party>('parties');
+  const { data: sellRecords, refresh: refreshSellRecords } =
+    useSupabaseTable<SellRecord>('sell_records');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [partyId, setPartyId] = useState('');
   const [partyName, setPartyName] = useState('');
@@ -42,7 +43,7 @@ const InvoicePage = () => {
   const resolvePartyId = async (name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) return '';
-    const currentParties = parties ?? (await db.parties.toArray());
+    const currentParties = parties ?? (await fetchTable<Party>('parties'));
     const existing = currentParties.find(
       (party) => party.name.trim().toLowerCase() === trimmedName.toLowerCase()
     );
@@ -51,8 +52,9 @@ const InvoicePage = () => {
       return existing.id;
     }
     const id = nanoid();
-    await db.parties.add({ id, name: trimmedName });
+    await insertRow('parties', { id, name: trimmedName });
     setPartyId(id);
+    await refreshParties();
     return id;
   };
 
@@ -102,7 +104,7 @@ const InvoicePage = () => {
 
   const saveInvoice = async () => {
     const resolvedPartyId = await resolvePartyId(partyName);
-    await db.invoices.add({
+    const invoice: Invoice = {
       id: nanoid(),
       invoiceNo,
       date,
@@ -113,9 +115,11 @@ const InvoicePage = () => {
       totalAmount: totals.totalAmount,
       averagePrice: totals.averagePrice,
       lineItems
-    });
+    };
+    await insertRow('invoices', invoice);
     await logAudit('invoice', invoiceNo, 'create', 'Created invoice');
     clearForm();
+    await refreshSellRecords();
   };
 
   const exportPdf = () => {

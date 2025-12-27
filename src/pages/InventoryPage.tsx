@@ -1,7 +1,7 @@
 import { useMemo, useState, type ChangeEvent } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { nanoid } from 'nanoid';
-import { db } from '../db';
+import { fetchByIds, fetchTable, insertRow, updateRows, deleteRow, deleteRows } from '../db';
+import { useSupabaseTable } from '../db/useSupabaseTable';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
 import Input from '../components/Input';
@@ -11,12 +11,15 @@ import { calculateInventorySummary } from '../utils/calculations';
 import { importWorkbook } from '../utils/importExport';
 import { logAudit } from '../utils/audit';
 import { formatCurrency } from '../utils/formatters';
+import type { InventoryRecord, Lot, Party, SellRecord } from '../types';
 
 const InventoryPage = () => {
-  const records = useLiveQuery(() => db.inventoryRecords.toArray(), []);
-  const sellRecords = useLiveQuery(() => db.sellRecords.toArray(), []);
-  const parties = useLiveQuery(() => db.parties.toArray(), []);
-  const lots = useLiveQuery(() => db.lots.toArray(), []);
+  const { data: records, refresh: refreshRecords } =
+    useSupabaseTable<InventoryRecord>('inventory_records');
+  const { data: sellRecords, refresh: refreshSellRecords } =
+    useSupabaseTable<SellRecord>('sell_records');
+  const { data: parties, refresh: refreshParties } = useSupabaseTable<Party>('parties');
+  const { data: lots, refresh: refreshLots } = useSupabaseTable<Lot>('lots');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [formatFilter, setFormatFilter] = useState('');
@@ -55,7 +58,8 @@ const InventoryPage = () => {
   const clearSelection = () => setSelectedIds([]);
 
   const generateSellId = async () => {
-    const currentRecords = sellRecords ?? (await db.sellRecords.toArray());
+    const currentRecords =
+      sellRecords ?? (await fetchTable<SellRecord>('sell_records'));
     const nextNumber =
       currentRecords.reduce((max, record) => {
         const match = record.sellId.match(/^SELL-(\d+)$/i);
@@ -67,7 +71,10 @@ const InventoryPage = () => {
 
   const markSold = async () => {
     if (selectedIds.length === 0) return;
-    const selectedRecords = await db.inventoryRecords.where('id').anyOf(selectedIds).toArray();
+    const selectedRecords = await fetchByIds<InventoryRecord>(
+      'inventory_records',
+      selectedIds
+    );
     if (selectedRecords.length === 0) return;
     const sellId = await generateSellId();
     const sellDate = new Date().toISOString().slice(0, 10);
@@ -92,7 +99,7 @@ const InventoryPage = () => {
       };
     });
 
-    await db.sellRecords.add({
+    await insertRow('sell_records', {
       id: nanoid(),
       sellId,
       date: sellDate,
@@ -100,26 +107,30 @@ const InventoryPage = () => {
       lineItems
     });
 
-    await db.inventoryRecords
-      .where('id')
-      .anyOf(selectedIds)
-      .modify({ status: 'sold', sellId });
+    await updateRows('inventory_records', selectedIds, {
+      status: 'sold',
+      sellId
+    });
     await logAudit('sell', sellId, 'create', 'Created sell record from inventory');
     await logAudit('inventory', selectedIds.join(','), 'update', 'Marked records as sold');
     clearSelection();
+    await refreshRecords();
+    await refreshSellRecords();
   };
 
   const deleteRecord = async (id: string) => {
-    await db.inventoryRecords.delete(id);
+    await deleteRow('inventory_records', id);
     await logAudit('inventory', id, 'delete', 'Deleted inventory record');
     setSelectedIds((prev) => prev.filter((item) => item !== id));
+    await refreshRecords();
   };
 
   const deleteSelected = async () => {
     if (selectedIds.length === 0) return;
-    await db.inventoryRecords.where('id').anyOf(selectedIds).delete();
+    await deleteRows('inventory_records', selectedIds);
     await logAudit('inventory', selectedIds.join(','), 'delete', 'Deleted selected inventory records');
     clearSelection();
+    await refreshRecords();
   };
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -128,9 +139,15 @@ const InventoryPage = () => {
     const summaryResult = await importWorkbook(file);
     setImportResult(
       summaryResult.sheets
-        .map((sheet) => `${sheet.name}: ${sheet.records} rows`) 
+        .map((sheet) => `${sheet.name}: ${sheet.records} rows`)
         .join(' | ')
     );
+    await Promise.all([
+      refreshRecords(),
+      refreshSellRecords(),
+      refreshParties(),
+      refreshLots()
+    ]);
   };
 
   const headers = [

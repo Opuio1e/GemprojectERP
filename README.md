@@ -52,8 +52,18 @@ Use **Export Workbook (XLSX)** from the Reporting or Settings page to download a
 This project is configured for GitHub Pages using GitHub Actions.
 
 1. Push the repo to GitHub.
-2. Update the repository settings to enable GitHub Pages for the `gh-pages` branch.
+2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
 3. The workflow in `.github/workflows/deploy.yml` will build and deploy automatically on `main`.
+4. After the workflow completes, visit the GitHub Pages URL shown in the Actions output.
+
+## Vite Preview Server (for quick staging checks)
+Use the built assets with Vite’s preview server:
+```bash
+npm run build
+npm run preview -- --host 0.0.0.0 --port 4173
+```
+
+Open http://localhost:4173 to view the production build locally.
 
 ## Notes
 - The app is fully static and runs entirely in the browser.

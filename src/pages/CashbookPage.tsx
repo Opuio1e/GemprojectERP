@@ -1,18 +1,20 @@
 import { useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { nanoid } from 'nanoid';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import { db } from '../db';
+import { fetchTable, insertRow, updateRow, deleteRow } from '../db';
+import { useSupabaseTable } from '../db/useSupabaseTable';
+import type { LedgerEntry, Lot, Party } from '../types';
 import { calculateLedgerBalance } from '../utils/calculations';
 import { logAudit } from '../utils/audit';
 
 const CashbookPage = () => {
-  const parties = useLiveQuery(() => db.parties.toArray(), []);
-  const lots = useLiveQuery(() => db.lots.toArray(), []);
-  const entries = useLiveQuery(() => db.ledgerEntries.toArray(), []);
+  const { data: parties, refresh: refreshParties } = useSupabaseTable<Party>('parties');
+  const { data: lots } = useSupabaseTable<Lot>('lots');
+  const { data: entries, refresh: refreshEntries } =
+    useSupabaseTable<LedgerEntry>('ledger_entries');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [partyId, setPartyId] = useState('');
   const [partyName, setPartyName] = useState('');
@@ -25,7 +27,7 @@ const CashbookPage = () => {
   const resolvePartyId = async (name: string) => {
     const trimmedName = name.trim();
     if (!trimmedName) return '';
-    const currentParties = parties ?? (await db.parties.toArray());
+    const currentParties = parties ?? (await fetchTable<Party>('parties'));
     const existing = currentParties.find(
       (party) => party.name.trim().toLowerCase() === trimmedName.toLowerCase()
     );
@@ -34,14 +36,15 @@ const CashbookPage = () => {
       return existing.id;
     }
     const id = nanoid();
-    await db.parties.add({ id, name: trimmedName });
+    await insertRow('parties', { id, name: trimmedName });
     setPartyId(id);
+    await refreshParties();
     return id;
   };
 
   const addEntry = async () => {
     const resolvedPartyId = await resolvePartyId(partyName);
-    await db.ledgerEntries.add({
+    await insertRow('ledger_entries', {
       id: nanoid(),
       date,
       partyId: resolvedPartyId,
@@ -54,16 +57,19 @@ const CashbookPage = () => {
     });
     await logAudit('cashbook', date, 'create', 'Added ledger entry');
     setNotes('');
+    await refreshEntries();
   };
 
   const postEntry = async (id: string) => {
-    await db.ledgerEntries.update(id, { posted: true });
+    await updateRow<LedgerEntry>('ledger_entries', id, { posted: true });
     await logAudit('cashbook', id, 'post', 'Posted ledger entry');
+    await refreshEntries();
   };
 
   const deleteEntry = async (id: string) => {
-    await db.ledgerEntries.delete(id);
+    await deleteRow('ledger_entries', id);
     await logAudit('cashbook', id, 'delete', 'Deleted ledger entry');
+    await refreshEntries();
   };
 
   const rowsWithBalance = useMemo(() => calculateLedgerBalance(entries ?? []), [entries]);

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { nanoid } from 'nanoid';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import { db } from '../db';
+import { fetchTable, insertRow, deleteRow } from '../db';
+import { useSupabaseTable } from '../db/useSupabaseTable';
+import type { Lot, ProductionStageEvent } from '../types';
 import { logAudit } from '../utils/audit';
 
 const stages = [
@@ -21,8 +22,9 @@ const stages = [
 ];
 
 const ProductionPage = () => {
-  const lots = useLiveQuery(() => db.lots.toArray(), []);
-  const events = useLiveQuery(() => db.productionStages.toArray(), []);
+  const { data: lots, refresh: refreshLots } = useSupabaseTable<Lot>('lots');
+  const { data: events, refresh: refreshEvents } =
+    useSupabaseTable<ProductionStageEvent>('production_stages');
   const [lotId, setLotId] = useState('');
   const [lotNo, setLotNo] = useState('');
   const [stage, setStage] = useState(stages[0]);
@@ -36,7 +38,7 @@ const ProductionPage = () => {
   const resolveLotId = async (number: string) => {
     const trimmedNumber = number.trim();
     if (!trimmedNumber) return '';
-    const currentLots = lots ?? (await db.lots.toArray());
+    const currentLots = lots ?? (await fetchTable<Lot>('lots'));
     const existing = currentLots.find(
       (lot) => lot.lotNo.trim().toLowerCase() === trimmedNumber.toLowerCase()
     );
@@ -45,14 +47,15 @@ const ProductionPage = () => {
       return existing.id;
     }
     const id = nanoid();
-    await db.lots.add({ id, lotNo: trimmedNumber });
+    await insertRow('lots', { id, lotNo: trimmedNumber });
     setLotId(id);
+    await refreshLots();
     return id;
   };
 
   const addEvent = async () => {
     const resolvedLotId = await resolveLotId(lotNo);
-    await db.productionStages.add({
+    await insertRow('production_stages', {
       id: nanoid(),
       lotId: resolvedLotId,
       stage,
@@ -65,11 +68,13 @@ const ProductionPage = () => {
     });
     await logAudit('production', resolvedLotId, 'create', 'Added stage event');
     setNotes('');
+    await refreshEvents();
   };
 
   const deleteEvent = async (id: string) => {
-    await db.productionStages.delete(id);
+    await deleteRow('production_stages', id);
     await logAudit('production', id, 'delete', 'Deleted stage event');
+    await refreshEvents();
   };
 
   const headers = [

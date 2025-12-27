@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { nanoid } from 'nanoid';
-import { db } from '../db';
+import { fetchTable, upsertRows } from '../db';
 import type {
   ImportSummary,
   InventoryRecord,
@@ -166,7 +166,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
         phone: String(row['phone'] ?? row['contact'] ?? ''),
         address: String(row['address'] ?? '')
       }));
-      await db.parties.bulkAdd(parties);
+      await upsertRows('parties', parties);
       summary.sheets.push({ name: sheetName, records: parties.length, unmapped: [] });
       continue;
     }
@@ -183,7 +183,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
         totalCts: Number(row['cts'] ?? row['total cts'] ?? 0),
         totalPcs: Number(row['pcs'] ?? row['total pcs'] ?? 0)
       }));
-      await db.lots.bulkAdd(lots);
+      await upsertRows('lots', lots);
       summary.sheets.push({ name: sheetName, records: lots.length, unmapped: [] });
       continue;
     }
@@ -203,7 +203,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
         amount: Number(row['amount'] ?? 0),
         status: String(row['status'] ?? 'available') as InventoryRecord['status']
       }));
-      await db.inventoryRecords.bulkAdd(records);
+      await upsertRows('inventory_records', records);
       summary.sheets.push({ name: sheetName, records: records.length, unmapped: [] });
       continue;
     }
@@ -225,7 +225,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
           lineItems
         };
       });
-      await db.invoices.bulkAdd(invoices);
+      await upsertRows('invoices', invoices);
       summary.sheets.push({ name: sheetName, records: invoices.length, unmapped: [] });
       continue;
     }
@@ -242,7 +242,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
         status: (String(row['status'] ?? 'open') as Memo['status']) ?? 'open',
         notes: String(row['notes'] ?? '')
       }));
-      await db.memos.bulkAdd(memos);
+      await upsertRows('memos', memos);
       summary.sheets.push({ name: sheetName, records: memos.length, unmapped: [] });
       continue;
     }
@@ -259,7 +259,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
         wastageCts: Number(row['wastage cts'] ?? 0),
         notes: String(row['notes'] ?? '')
       }));
-      await db.productionStages.bulkAdd(stages);
+      await upsertRows('production_stages', stages);
       summary.sheets.push({ name: sheetName, records: stages.length, unmapped: [] });
       continue;
     }
@@ -276,7 +276,7 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
         notes: String(row['notes'] ?? ''),
         posted: Boolean(row['posted'] ?? false)
       }));
-      await db.ledgerEntries.bulkAdd(entries);
+      await upsertRows('ledger_entries', entries);
       summary.sheets.push({ name: sheetName, records: entries.length, unmapped: [] });
       continue;
     }
@@ -299,14 +299,14 @@ export const importWorkbook = async (file: File): Promise<ImportSummary> => {
 
 export const exportWorkbook = async () => {
   const workbook = XLSX.utils.book_new();
-  const parties = await db.parties.toArray();
-  const lots = await db.lots.toArray();
-  const inventory = await db.inventoryRecords.toArray();
-  const sellRecords = await db.sellRecords.toArray();
-  const invoices = await db.invoices.toArray();
-  const memos = await db.memos.toArray();
-  const production = await db.productionStages.toArray();
-  const ledger = await db.ledgerEntries.toArray();
+  const parties = await fetchTable<Party>('parties');
+  const lots = await fetchTable<Lot>('lots');
+  const inventory = await fetchTable<InventoryRecord>('inventory_records');
+  const sellRecords = await fetchTable<SellRecord>('sell_records');
+  const invoices = await fetchTable<Invoice>('invoices');
+  const memos = await fetchTable<Memo>('memos');
+  const production = await fetchTable<ProductionStageEvent>('production_stages');
+  const ledger = await fetchTable<LedgerEntry>('ledger_entries');
 
   if (memos.length === 0) {
     XLSX.utils.book_append_sheet(workbook, buildMemoFormSheet({}), 'Memo Template');

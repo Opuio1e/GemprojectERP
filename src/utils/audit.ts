@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
-import { db } from '../db';
-import type { AuditAction } from '../types';
+import { insertRow } from '../db';
+import type { AuditAction, AuditLog } from '../types';
 
 export const logAudit = async (
   entityType: string,
@@ -8,12 +8,13 @@ export const logAudit = async (
   action: AuditAction,
   summary: string
 ) => {
-  await db.auditLog.add({
+  const entry: AuditLog = {
     id: nanoid(),
     timestamp: new Date().toISOString(),
     entityType,
     entityId,
     action,
     summary
-  });
+  };
+  await insertRow('audit_log', entry);
 };

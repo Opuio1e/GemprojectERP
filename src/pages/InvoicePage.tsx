@@ -216,17 +216,18 @@ const InvoicePage = () => {
   return (
     <div className="space-y-6">
       <div className="print-block hidden print:!block">
-        <div className="print-invoice space-y-4">
-          <div className="print-header">
-            <div className="print-title">INVOICE</div>
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-lg font-semibold">Invoice</h1>
+            <p className="text-xs text-slate-600">Printable invoice summary</p>
           </div>
           <table className="print-meta w-full text-sm">
             <tbody>
               <tr>
-                <td className="print-label">Date</td>
-                <td>{date}</td>
                 <td className="print-label">Invoice No</td>
                 <td>{invoiceNo}</td>
+                <td className="print-label">Date</td>
+                <td>{date}</td>
               </tr>
               <tr>
                 <td className="print-label">Party</td>
@@ -235,16 +236,16 @@ const InvoicePage = () => {
                 <td>{sellId}</td>
               </tr>
               <tr>
-                <td className="print-label">Total Amount</td>
-                <td>{formatCurrency(totals.totalAmount)}</td>
-                <td className="print-label">Average Price</td>
-                <td>{formatCurrency(totals.averagePrice)}</td>
-              </tr>
-              <tr>
-                <td className="print-label">Transaction Type</td>
-                <td>{transactionType}</td>
                 <td className="print-label">Total CTS</td>
                 <td>{totals.totalCts.toFixed(2)}</td>
+                <td className="print-label">Total Amount</td>
+                <td>{formatCurrency(totals.totalAmount)}</td>
+              </tr>
+              <tr>
+                <td className="print-label">Avg Price</td>
+                <td>{formatCurrency(totals.averagePrice)}</td>
+                <td className="print-label">Transaction</td>
+                <td>{transactionType}</td>
               </tr>
             </tbody>
           </table>
